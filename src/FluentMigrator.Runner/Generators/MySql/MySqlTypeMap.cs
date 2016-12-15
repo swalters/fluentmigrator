@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 using FluentMigrator.Runner.Generators.Base;
 
 namespace FluentMigrator.Runner.Generators.MySql
@@ -9,6 +10,8 @@ namespace FluentMigrator.Runner.Generators.MySql
         public const int StringCapacity = 255;
         public const int TextCapacity = 65535;
         public const int MediumTextCapacity = 16777215;
+		public const int LongTextCapacity = int.MaxValue;
+		public const int LongBlobCapacity = int.MaxValue;
         public const int DecimalCapacity = 19;
 
         protected override void SetupTypeMaps()
@@ -17,14 +20,17 @@ namespace FluentMigrator.Runner.Generators.MySql
             SetTypeMap(DbType.AnsiStringFixedLength, "CHAR($size)", StringCapacity);
             SetTypeMap(DbType.AnsiStringFixedLength, "TEXT", TextCapacity);
             SetTypeMap(DbType.AnsiStringFixedLength, "MEDIUMTEXT", MediumTextCapacity);
+			SetTypeMap(DbType.AnsiStringFixedLength, "LONGTEXT", LongTextCapacity);
             SetTypeMap(DbType.AnsiString, "VARCHAR(255)");
             SetTypeMap(DbType.AnsiString, "VARCHAR($size)", StringCapacity);
             SetTypeMap(DbType.AnsiString, "TEXT", TextCapacity);
             SetTypeMap(DbType.AnsiString, "MEDIUMTEXT", MediumTextCapacity);
+			SetTypeMap(DbType.AnsiString, "LONGTEXT", LongTextCapacity);
             SetTypeMap(DbType.Binary, "LONGBLOB");
             SetTypeMap(DbType.Binary, "TINYBLOB", AnsiTinyStringCapacity);
             SetTypeMap(DbType.Binary, "BLOB", TextCapacity);
             SetTypeMap(DbType.Binary, "MEDIUMBLOB", MediumTextCapacity);
+            SetTypeMap(DbType.Binary, "LONGBLOB", LongBlobCapacity);
             SetTypeMap(DbType.Boolean, "TINYINT(1)");
             SetTypeMap(DbType.Byte, "TINYINT UNSIGNED");
             SetTypeMap(DbType.Currency, "MONEY");
@@ -42,10 +48,12 @@ namespace FluentMigrator.Runner.Generators.MySql
             SetTypeMap(DbType.StringFixedLength, "CHAR($size)", StringCapacity);
             SetTypeMap(DbType.StringFixedLength, "TEXT", TextCapacity);
             SetTypeMap(DbType.StringFixedLength, "MEDIUMTEXT", MediumTextCapacity);
+			SetTypeMap(DbType.StringFixedLength, "LONGTEXT", LongTextCapacity);
             SetTypeMap(DbType.String, "VARCHAR(255)");
             SetTypeMap(DbType.String, "VARCHAR($size)", StringCapacity);
             SetTypeMap(DbType.String, "TEXT", TextCapacity);
             SetTypeMap(DbType.String, "MEDIUMTEXT", MediumTextCapacity);
+			SetTypeMap(DbType.String, "LONGTEXT", LongTextCapacity);
             SetTypeMap(DbType.Time, "DATETIME");
         }
     }
