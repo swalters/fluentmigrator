@@ -12,6 +12,7 @@ namespace FluentMigrator.Tests.Integration.Processors.Firebird
 {
     [TestFixture]
     [Category("Integration")]
+    [Category("Firebird")]
     public class FirebirdColumnTests : BaseColumnTests
     {
         public FbConnection Connection { get; set; }
@@ -21,10 +22,7 @@ namespace FluentMigrator.Tests.Integration.Processors.Firebird
         [SetUp]
         public void SetUp()
         {
-            if (!System.IO.File.Exists("fbtest.fdb"))
-            {
-                FbConnection.CreateDatabase(IntegrationTestOptions.Firebird.ConnectionString);
-            }
+            FbDatabase.CreateDatabase(IntegrationTestOptions.Firebird.ConnectionString);
             Connection = new FbConnection(IntegrationTestOptions.Firebird.ConnectionString);
             var options = FirebirdOptions.AutoCommitBehaviour();
             Processor = new FirebirdProcessor(Connection, new FirebirdGenerator(options), new TextWriterAnnouncer(System.Console.Out), new ProcessorOptions(), new FirebirdDbFactory(), options);
@@ -39,20 +37,22 @@ namespace FluentMigrator.Tests.Integration.Processors.Firebird
             if (!Processor.WasCommitted)
                 Processor.CommitTransaction();
             Connection.Close();
+
+            FbDatabase.DropDatabase(IntegrationTestOptions.Firebird.ConnectionString);
         }
 
         [Test]
         public override void CallingColumnExistsCanAcceptColumnNameWithSingleQuote()
         {
-            var columnNameWithSingleQuote = Quoter.QuoteColumnName("i'd");
+            var columnNameWithSingleQuote = "\"i'd\"";
             using (var table = new FirebirdTestTable(Processor, null, string.Format("{0} int", columnNameWithSingleQuote)))
-                Processor.ColumnExists(null, table.Name, "i'd").ShouldBeTrue();
+                Processor.ColumnExists(null, table.Name, "\"i'd\"").ShouldBeTrue();
         }
 
         [Test]
         public override void CallingColumnExistsCanAcceptTableNameWithSingleQuote()
         {
-            using (var table = new FirebirdTestTable("Test'Table", Processor, null, "id int"))
+            using (var table = new FirebirdTestTable("\"Test'Table\"", Processor, null, "id int"))
                 Processor.ColumnExists(null, table.Name, "ID").ShouldBeTrue();
         }
 

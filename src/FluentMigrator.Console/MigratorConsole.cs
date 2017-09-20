@@ -48,6 +48,8 @@ namespace FluentMigrator.Console
         public int Timeout;
         public bool Verbose;
         public long Version;
+        public long StartVersion;
+        public bool NoConnection;
         public string WorkingDirectory;
         public bool TransactionPerSession;
         public string ProviderSwitches;
@@ -131,6 +133,16 @@ namespace FluentMigrator.Console
                                             "The specific version to migrate. Default is 0, which will run all migrations.",
                                             v => { Version = long.Parse(v); }
                                             },
+                                         {
+                                            "startVersion=",
+                                            "The specific version to start migrating from. Only used when NoConnection is true. Default is 0",
+                                            v => { StartVersion = long.Parse(v); }
+                                            },
+                                        {
+                                            "noConnection",
+                                            "Indicates that migrations will be generated without consulting a target database. Should only be used when generating an output file.",
+                                            v => { NoConnection = NoConnection = true; }
+                                            },
                                         {
                                             "verbose=",
                                             "Show the SQL statements generated and execution time in the console. Default is false.",
@@ -184,7 +196,7 @@ namespace FluentMigrator.Console
                 }
                 catch (OptionException e)
                 {
-                    consoleAnnouncer.Error(e.Message);
+                    consoleAnnouncer.Error(e);
                     consoleAnnouncer.Say("Try 'migrate --help' for more information.");
                     return;
                 }
@@ -218,7 +230,7 @@ namespace FluentMigrator.Console
             }
             catch (Exception ex)
             {
-                consoleAnnouncer.Error(ex.ToString());
+                consoleAnnouncer.Error(ex);
                 Environment.ExitCode = 1;
             }
 
@@ -240,7 +252,7 @@ namespace FluentMigrator.Console
             consoleAnnouncer.Write("             server=.\\SQLExpress;database=Foo;trusted_connection=true");
             consoleAnnouncer.Write("   ");
             consoleAnnouncer.Write("OR use a named connection string from the machine.config:");
-            consoleAnnouncer.Write("  migrate -a bin\\debug\\MyMigrations.dll -db SqlServer2008 -connectionName \"namedConnection\" -profile \"Debug\"");
+            consoleAnnouncer.Write("  migrate -a bin\\debug\\MyMigrations.dll -db SqlServer2008 -conn \"namedConnection\" -profile \"Debug\"");
             consoleAnnouncer.HorizontalRule();
             consoleAnnouncer.Write("Options:");
             p.WriteOptionDescriptions(System.Console.Out);
@@ -287,12 +299,14 @@ namespace FluentMigrator.Console
             {
                 Database = ProcessorType,
                 Connection = Connection,
-                Target = TargetAssembly,
+                Targets = new string[] {TargetAssembly},
                 PreviewOnly = PreviewOnly,
                 Namespace = Namespace,
                 NestedNamespaces = NestedNamespaces,
                 Task = Task,
                 Version = Version,
+                StartVersion = StartVersion,
+                NoConnection = NoConnection,
                 Steps = Steps,
                 WorkingDirectory = WorkingDirectory,
                 Profile = Profile,

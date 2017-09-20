@@ -80,7 +80,7 @@ namespace FluentMigrator.NAnt
         public bool Preview { get; set; }
 
         [TaskAttribute("verbose")]
-        public bool Verbose { get; set; }
+        public override bool Verbose { get; set; }
 
         [TaskAttribute("transaction-per-session")]
         public bool TransactionPerSession { get; set; }
@@ -114,7 +114,7 @@ namespace FluentMigrator.NAnt
                                         ApplicationContext = ApplicationContext,
                                         Database = Database,
                                         Connection = Connection,
-                                        Target = Target,
+                                        Targets = new string[] {Target},
                                         PreviewOnly = Preview,
                                         Namespace = Namespace,
                                         NestedNamespaces = NestedNamespaces,

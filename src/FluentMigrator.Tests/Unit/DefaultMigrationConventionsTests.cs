@@ -111,6 +111,13 @@ namespace FluentMigrator.Tests.Unit
         }
 
         [Test]
+        public void GetMaintenanceStageReturnsCorrectStage()
+        {
+            DefaultMigrationConventions.GetMaintenanceStage(typeof (MaintenanceAfterEach))
+                .ShouldBe(MigrationStage.AfterEach);
+        }
+
+        [Test]
         public void MigrationInfoShouldRetainMigration()
         {
             var migrationType = typeof(DefaultConventionMigrationFake);
@@ -164,6 +171,13 @@ namespace FluentMigrator.Tests.Unit
         {
             DefaultMigrationConventions.TypeHasTags(typeof(HasNoTagsFake))
                 .ShouldBeFalse();
+        }
+
+        [Test]
+        public void TypeHasTagsReturnTrueIfBaseTypeDoesHaveTagsAttribute()
+        {
+            DefaultMigrationConventions.TypeHasTags(typeof(ConcretehasTagAttribute))
+                .ShouldBeTrue();
         }
 
         public class TypeHasMatchingTags
@@ -247,6 +261,14 @@ namespace FluentMigrator.Tests.Unit
                 DefaultMigrationConventions.TypeHasMatchingTags(typeof(TaggedWithBeAndUkAndProductionAndStagingInTwoTagsAttributes), new[] { "UK", "IE" })
                     .ShouldBeFalse();
             }
+
+            [Test]
+            [Category("Tagging")]
+            public void WhenBaseTypeHasTagsThenConcreteTypeReturnsTrue()
+            {
+                DefaultMigrationConventions.TypeHasMatchingTags(typeof(ConcretehasTagAttribute), new[] { "UK" })
+                    .ShouldBeTrue();
+            }
         }
 
         [FluentMigrator.Migration(20130508175300)]
@@ -273,6 +295,7 @@ namespace FluentMigrator.Tests.Unit
         }
     }
 
+
     [Tags("BE", "UK", "Staging", "Production")]
     public class TaggedWithBeAndUkAndProductionAndStagingInOneTagsAttribute
     {
@@ -298,6 +321,19 @@ namespace FluentMigrator.Tests.Unit
     {
     }
 
+    [Tags("UK")]
+    public abstract class BaseHasTagAttribute : Migration
+    { }
+
+    public class ConcretehasTagAttribute : BaseHasTagAttribute
+    {
+        public override void Up(){}
+
+        public override void Down(){}
+    }
+
+
+
     [Migration(123, TransactionBehavior.None)]
     [MigrationTrait("key", "test")]
     internal class DefaultConventionMigrationFake : Migration
@@ -311,4 +347,12 @@ namespace FluentMigrator.Tests.Unit
         public override void Up() { }
         public override void Down() { }
     }
+
+    [Maintenance(MigrationStage.AfterEach)]
+    internal class MaintenanceAfterEach : Migration
+    {
+        public override void Up() { }
+        public override void Down() { }
+    }
+
 }

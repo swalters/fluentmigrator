@@ -1,6 +1,5 @@
 ﻿using FirebirdSql.Data.FirebirdClient;
 using FluentMigrator.Runner.Announcers;
-using FluentMigrator.Runner.Generators;
 using FluentMigrator.Runner.Generators.Firebird;
 using FluentMigrator.Runner.Processors;
 using FluentMigrator.Runner.Processors.Firebird;
@@ -12,23 +11,20 @@ namespace FluentMigrator.Tests.Integration.Processors.Firebird
 {
     [TestFixture]
     [Category("Integration")]
+    [Category("Firebird")]
     public class FirebirdConstraintTests : BaseConstraintTests
     {
         public FbConnection Connection { get; set; }
         public FirebirdProcessor Processor { get; set; }
-        public IQuoter Quoter { get; set; }
 
         [SetUp]
         public void SetUp()
         {
-            if (!System.IO.File.Exists("fbtest.fdb"))
-            {
-                FbConnection.CreateDatabase(IntegrationTestOptions.Firebird.ConnectionString);
-            }
+            FbDatabase.CreateDatabase(IntegrationTestOptions.Firebird.ConnectionString);
+
             Connection = new FbConnection(IntegrationTestOptions.Firebird.ConnectionString);
             var options = FirebirdOptions.AutoCommitBehaviour();
             Processor = new FirebirdProcessor(Connection, new FirebirdGenerator(options), new TextWriterAnnouncer(System.Console.Out), new ProcessorOptions(), new FirebirdDbFactory(), options);
-            Quoter = new FirebirdQuoter();
             Connection.Open();
             Processor.BeginTransaction();
         }
@@ -39,19 +35,21 @@ namespace FluentMigrator.Tests.Integration.Processors.Firebird
             if (!Processor.WasCommitted)
                 Processor.CommitTransaction();
             Connection.Close();
+
+            FbDatabase.DropDatabase(IntegrationTestOptions.Firebird.ConnectionString);
         }
 
         [Test]
         public override void CallingConstraintExistsCanAcceptConstraintNameWithSingleQuote()
         {
-            using (var table = new FirebirdTestTable(Processor, null, "id int", string.Format("wibble int CONSTRAINT {0} CHECK(wibble > 0)", Quoter.QuoteConstraintName("c'1"))))
-                Processor.ConstraintExists(null, table.Name, "c'1").ShouldBeTrue();
+            using (var table = new FirebirdTestTable(Processor, null, "id int", string.Format("wibble int CONSTRAINT {0} CHECK(wibble > 0)", "\"c'1\"")))
+                Processor.ConstraintExists(null, table.Name, "\"c'1\"").ShouldBeTrue();
         }
 
         [Test]
         public override void CallingConstraintExistsCanAcceptTableNameWithSingleQuote()
         {
-            using (var table = new FirebirdTestTable("Test'Table", Processor, null, "id int", "wibble int CONSTRAINT c1 CHECK(wibble > 0)"))
+            using (var table = new FirebirdTestTable("\"Test'Table\"", Processor, null, "id int", "wibble int CONSTRAINT c1 CHECK(wibble > 0)"))
                 Processor.ConstraintExists(null, table.Name, "C1").ShouldBeTrue();
         }
 

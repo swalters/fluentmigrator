@@ -143,6 +143,23 @@ namespace FluentMigrator.Tests.Unit.Generators
         }
 
         [Test]
+        public void DateTimeOffsetIsFormattedIso8601WithQuotes() 
+        {
+            ChangeCulture();
+            DateTimeOffset date = new DateTimeOffset(2010, 1, 2, 18, 4, 5, 123, TimeSpan.FromHours(-4));
+            quoter.QuoteValue(date).ShouldBe("'2010-01-02T18:04:05 -04:00'");
+        }
+
+        [Test]
+        public void DateTimeOffsetIsFormattedIso8601WithQuotes_WithItalyAsCulture() 
+        {
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("it-IT");
+            DateTimeOffset date = new DateTimeOffset(2010, 1, 2, 18, 4, 5, 123, TimeSpan.FromHours(-4));
+            quoter.QuoteValue(date)
+                .ShouldBe("'2010-01-02T18:04:05 -04:00'");
+        }
+
+        [Test]
         public void EnumIsFormattedAsString()
         {
             quoter.QuoteValue(Foo.Bar)
@@ -212,7 +229,7 @@ namespace FluentMigrator.Tests.Unit.Generators
         [Test]
         public void ShouldEscapeSqliteObjectNames()
         {
-            SqliteQuoter quoter = new SqliteQuoter();
+            SQLiteQuoter quoter = new SQLiteQuoter();
             quoter.Quote("Table\"Name").ShouldBe("\"Table\"\"Name\"");
         }
 
@@ -266,6 +283,13 @@ namespace FluentMigrator.Tests.Unit.Generators
         {
             quoter.QuoteValue(new byte[] { 0, 254, 13, 18, 125, 17 })
                 .ShouldBe("0x00fe0d127d11");
+        }
+
+        [Test]
+        public void TimeSpanIsFormattedQuotes()
+        {
+            quoter.QuoteValue(new TimeSpan(2, 13, 65))
+                .ShouldBe("'02:14:05'");
         }
 
         [Test]

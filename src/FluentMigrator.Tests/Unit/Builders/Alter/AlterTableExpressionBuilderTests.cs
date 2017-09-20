@@ -97,6 +97,12 @@ namespace FluentMigrator.Tests.Unit.Builders.Alter
         }
 
         [Test]
+        public void CallingAsDateTimeOffsetSetsColumnDbTypeToDateTimeOffset() 
+        {
+            VerifyColumnDbType(DbType.DateTimeOffset, b => b.AsDateTimeOffset());
+        }
+
+        [Test]
         public void CallingAsDecimalSetsColumnDbTypeToDecimal()
         {
             VerifyColumnDbType(DbType.Decimal, b => b.AsDecimal());
@@ -251,8 +257,6 @@ namespace FluentMigrator.Tests.Unit.Builders.Alter
 
         [Test]
         public void CallingWithDefaultValueOnNewColumnDoesNotAddDefaultConstraintExpression() {
-            const int value = 42;
-
             var expressions = new List<IMigrationExpression>();
             var contextMock = new Mock<IMigrationContext>();
             contextMock.Setup(x => x.Expressions).Returns(expressions);
@@ -271,8 +275,6 @@ namespace FluentMigrator.Tests.Unit.Builders.Alter
 
         [Test]
         public void CallingWithDefaultValueOnAlterColumnAddsDefaultConstraintExpression() {
-            const int value = 42;
-
             var expressions = new List<IMigrationExpression>();
             var contextMock = new Mock<IMigrationContext>();
             contextMock.Setup(x => x.Expressions).Returns(expressions);
@@ -303,6 +305,44 @@ namespace FluentMigrator.Tests.Unit.Builders.Alter
             builder.WithDefault(SystemMethods.CurrentDateTime);
 
             columnMock.VerifySet(c => c.DefaultValue = SystemMethods.CurrentDateTime);
+        }
+
+        [Test]
+        public void CallingWithDefaultOnNewColumnDoesNotAddDefaultConstraintExpression()
+        {
+            var expressions = new List<IMigrationExpression>();
+            var contextMock = new Mock<IMigrationContext>();
+            contextMock.Setup(x => x.Expressions).Returns(expressions);
+
+            var columnMock = new Mock<ColumnDefinition>();
+            columnMock.Setup(x => x.ModificationType).Returns(ColumnModificationType.Create);
+
+            var expressionMock = new Mock<AlterTableExpression>();
+
+            var builder = new AlterTableExpressionBuilder(expressionMock.Object, contextMock.Object);
+            builder.CurrentColumn = columnMock.Object;
+            builder.WithDefault(SystemMethods.CurrentDateTime);
+
+            Assert.That(expressions.Count(), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void CallingWithDefaultOnAlterColumnAddsDefaultConstraintExpression()
+        {
+            var expressions = new List<IMigrationExpression>();
+            var contextMock = new Mock<IMigrationContext>();
+            contextMock.Setup(x => x.Expressions).Returns(expressions);
+
+            var columnMock = new Mock<ColumnDefinition>();
+            columnMock.Setup(x => x.ModificationType).Returns(ColumnModificationType.Alter);
+
+            var expressionMock = new Mock<AlterTableExpression>();
+
+            var builder = new AlterTableExpressionBuilder(expressionMock.Object, contextMock.Object);
+            builder.CurrentColumn = columnMock.Object;
+            builder.WithDefault(SystemMethods.CurrentDateTime);
+
+            Assert.That(expressions.Count(), Is.EqualTo(1));
         }
 
         [Test]
