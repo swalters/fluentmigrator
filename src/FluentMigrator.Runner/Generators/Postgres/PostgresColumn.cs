@@ -11,7 +11,8 @@ namespace FluentMigrator.Runner.Generators.Postgres
     {
         public PostgresColumn() : base(new PostgresTypeMap(), new PostgresQuoter())
         {
-            AlterClauseOrder = new List<Func<ColumnDefinition, string>> { FormatAlterType, FormatAlterNullable };
+            AlterClauseOrder = new List<Func<ColumnDefinition, string>> {this.FormatAlterType, FormatAlterNullable };
+            ClauseOrder = new List<Func<ColumnDefinition, string>> { this.FormatString, FormatType, FormatNullable, FormatDefaultValue, FormatPrimaryKey, FormatIdentity };
         }
 
         public string FormatAlterDefaultValue(string column, object defaultValue)
