@@ -33,8 +33,8 @@ namespace FluentMigrator.Runner.Generators.Postgres
         private string GetFullTableName(string schemaName, string tableName)
         {
             return string.IsNullOrEmpty(schemaName)
-               ? Quoter.QuoteTableName(tableName)
-               : string.Format("{0}.{1}", Quoter.QuoteSchemaName(schemaName), Quoter.QuoteTableName(tableName));
+               ? tableName
+               : string.Format("{0}.{1}", Quoter.QuoteSchemaName(schemaName), tableName);
         }
 
         protected override string GenerateTableDescription(
@@ -55,7 +55,7 @@ namespace FluentMigrator.Runner.Generators.Postgres
             return string.Format(
                 ColumnDescriptionTemplate,
                 GetFullTableName(schemaName, tableName),
-                Quoter.QuoteColumnName(columnName),
+                columnName,
                 columnDescription.Replace("'", "''"));
         }
     }

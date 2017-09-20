@@ -47,7 +47,7 @@ namespace FluentMigrator.Runner.Generators.Postgres
             {
                 string columnClause = action(column);
                 if (!string.IsNullOrEmpty(columnClause))
-                    clauses.Add(string.Format("ALTER {0} {1}", Quoter.QuoteColumnName(column.Name), columnClause));
+                    clauses.Add(string.Format("ALTER {0} {1}", column.Name, columnClause));
             }
 
             return string.Join(", ", clauses.ToArray());
