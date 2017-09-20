@@ -36,37 +36,37 @@ namespace FluentMigrator.Runner.Processors.Postgres
 
         public override bool SchemaExists(string schemaName)
         {
-            return Exists("select * from information_schema.schemata where schema_name = '{0}'", FormatToSafeSchemaName(schemaName));
+            return Exists("select * from information_schema.schemata where schema_name = '{0}'", quoter.QuoteSchemaName(schemaName));
         }
 
         public override bool TableExists(string schemaName, string tableName)
         {
-            return Exists("select * from information_schema.tables where table_schema = '{0}' and table_name = '{1}'", FormatToSafeSchemaName(schemaName), FormatToSafeName(tableName));
+            return Exists("select * from information_schema.tables where table_schema = '{0}' and table_name = '{1}'", quoter.QuoteSchemaName(schemaName), (tableName));
         }
 
         public override bool ColumnExists(string schemaName, string tableName, string columnName)
         {
-            return Exists("select * from information_schema.columns where table_schema = '{0}' and table_name = '{1}' and column_name = '{2}'", FormatToSafeSchemaName(schemaName), FormatToSafeName(tableName), FormatToSafeName(columnName));
+            return Exists("select * from information_schema.columns where table_schema = '{0}' and table_name = '{1}' and column_name = '{2}'", quoter.QuoteSchemaName(schemaName), (tableName), (columnName));
         }
 
         public override bool ConstraintExists(string schemaName, string tableName, string constraintName)
         {
-            return Exists("select * from information_schema.table_constraints where constraint_catalog = current_catalog and table_schema = '{0}' and table_name = '{1}' and constraint_name = '{2}'", FormatToSafeSchemaName(schemaName), FormatToSafeName(tableName), FormatToSafeName(constraintName));
+            return Exists("select * from information_schema.table_constraints where constraint_catalog = current_catalog and table_schema = '{0}' and table_name = '{1}' and constraint_name = '{2}'", quoter.QuoteSchemaName(schemaName), tableName, (constraintName));
         }
 
         public override bool IndexExists(string schemaName, string tableName, string indexName)
         {
-            return Exists("select * from pg_catalog.pg_indexes where schemaname='{0}' and tablename = '{1}' and indexname = '{2}'", FormatToSafeSchemaName(schemaName), FormatToSafeName(tableName), FormatToSafeName(indexName));
+            return Exists("select * from pg_catalog.pg_indexes where schemaname='{0}' and tablename = '{1}' and indexname = '{2}'", quoter.QuoteSchemaName(schemaName), tableName, indexName);
         }
 
         public override bool SequenceExists(string schemaName, string sequenceName)
         {
-            return Exists("select * from information_schema.sequences where sequence_catalog = current_catalog and sequence_schema ='{0}' and sequence_name = '{1}'", FormatToSafeSchemaName(schemaName), FormatToSafeName(sequenceName));
+            return Exists("select * from information_schema.sequences where sequence_catalog = current_catalog and sequence_schema ='{0}' and sequence_name = '{1}'", quoter.QuoteSchemaName(schemaName), FormatToSafeName(sequenceName));
         }
 
         public override DataSet ReadTableData(string schemaName, string tableName)
         {
-            return Read("SELECT * FROM {0}.{1}", quoter.QuoteSchemaName(schemaName), quoter.QuoteTableName(tableName));
+            return Read("SELECT * FROM {0}.{1}", quoter.QuoteSchemaName(schemaName), tableName);
         }
 
         public override bool DefaultValueExists(string schemaName, string tableName, string columnName, object defaultValue)
@@ -144,12 +144,17 @@ namespace FluentMigrator.Runner.Processors.Postgres
 
         private string FormatToSafeSchemaName(string schemaName)
         {
-            return FormatHelper.FormatSqlEscape(quoter.UnQuoteSchemaName(schemaName));
+            return FormatHelper.FormatSqlEscape(quoter.QuoteSchemaName(schemaName));
         }
 
         private string FormatToSafeName(string sqlName)
         {
             return FormatHelper.FormatSqlEscape(quoter.UnQuote(sqlName));
+        }
+
+        private static string FormatSqlEscape(string sql)
+        {
+            return sql.Replace("'", "''");
         }
     }
 }

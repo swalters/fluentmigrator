@@ -10,7 +10,7 @@ namespace FluentMigrator.Runner.Generators.Base
     {
         private readonly ITypeMap _typeMap;
         private readonly IQuoter _quoter;
-        protected IList<Func<ColumnDefinition, string>> ClauseOrder { get; set; }
+        public IList<Func<ColumnDefinition, string>> ClauseOrder { get; set; }
 
         public ColumnBase(ITypeMap typeMap, IQuoter quoter)
         {

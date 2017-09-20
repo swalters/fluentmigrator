@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using FluentMigrator.Expressions;
 using FluentMigrator.Model;
+using FluentMigrator.Runner.Generators.Base;
 using FluentMigrator.Runner.Generators.Generic;
 
 namespace FluentMigrator.Runner.Generators.Postgres
@@ -14,33 +15,33 @@ namespace FluentMigrator.Runner.Generators.Postgres
 
         public override string Generate(CreateSchemaExpression expression)
         {
-            return string.Format("CREATE SCHEMA {0}", Quoter.QuoteSchemaName(expression.SchemaName));
+            return string.Format("CREATE SCHEMA {0}", this.Quoter.QuoteSchemaName(expression.SchemaName));
         }
 
         public override string Generate(DeleteSchemaExpression expression)
         {
-            return string.Format("DROP SCHEMA {0}", Quoter.QuoteSchemaName(expression.SchemaName));
+            return string.Format("DROP SCHEMA {0}", expression.SchemaName);
         }
 
         public override string Generate(CreateTableExpression expression)
         {
-            var tableName = Quoter.QuoteTableName(expression.TableName);
-            return string.Format("CREATE TABLE {0}.{1} ({2})", Quoter.QuoteSchemaName(expression.SchemaName), tableName, Column.Generate(expression.Columns, tableName));
+            var tableName = expression.TableName;
+            return string.Format("CREATE TABLE {0}.{1} ({2})", this.Quoter.QuoteSchemaName(expression.SchemaName), tableName, Column.Generate(expression.Columns, tableName));
         }
 
         public override string Generate(AlterColumnExpression expression)
         {
-            return String.Format("ALTER TABLE {0}.{1} {2}", Quoter.QuoteSchemaName(expression.SchemaName), Quoter.QuoteTableName(expression.TableName), ((PostgresColumn)Column).GenerateAlterClauses(expression.Column));
+            return String.Format("ALTER TABLE {0}.{1} ALTER {2} TYPE {3}", this.Quoter.QuoteSchemaName(expression.SchemaName), expression.TableName, expression.Column.Name, ((PostgresColumn)Column).GetColumnType(expression.Column));
         }
 
         public override string Generate(CreateColumnExpression expression)
         {
-            return string.Format("ALTER TABLE {0}.{1} ADD {2}", Quoter.QuoteSchemaName(expression.SchemaName), Quoter.QuoteTableName(expression.TableName), Column.Generate(expression.Column));
+            return string.Format("ALTER TABLE {0}.{1} ADD {2}", this.Quoter.QuoteSchemaName(expression.SchemaName), expression.TableName, Column.Generate(expression.Column));
         }
 
         public override string Generate(DeleteTableExpression expression)
         {
-            return String.Format("DROP TABLE {0}.{1}", Quoter.QuoteSchemaName(expression.SchemaName), Quoter.QuoteTableName(expression.TableName));
+            return String.Format("DROP TABLE {0}.{1}", this.Quoter.QuoteSchemaName(expression.SchemaName), expression.TableName);
         }
 
         public override string Generate(DeleteColumnExpression expression)
@@ -48,10 +49,10 @@ namespace FluentMigrator.Runner.Generators.Postgres
             StringBuilder builder = new StringBuilder();
             foreach (string columnName in expression.ColumnNames) {
                 if (expression.ColumnNames.First() != columnName) builder.AppendLine(";");
-                builder.AppendFormat("ALTER TABLE {0}.{1} DROP COLUMN {2}", 
-                    Quoter.QuoteSchemaName(expression.SchemaName), 
-                    Quoter.QuoteTableName(expression.TableName), 
-                    Quoter.QuoteColumnName(columnName));
+                builder.AppendFormat("ALTER TABLE {0}.{1} DROP COLUMN {2}",
+                    this.Quoter.QuoteSchemaName(expression.SchemaName), 
+                   expression.TableName, 
+                    columnName);
             }
             return builder.ToString();
         }
@@ -64,12 +65,12 @@ namespace FluentMigrator.Runner.Generators.Postgres
             const string sql = "ALTER TABLE {0}.{1} ADD CONSTRAINT {2} FOREIGN KEY ({3}) REFERENCES {4}.{5} ({6}){7}{8}";
 
             return string.Format(sql,
-                                Quoter.QuoteSchemaName(expression.ForeignKey.ForeignTableSchema),
-                                Quoter.QuoteTableName(expression.ForeignKey.ForeignTable),
-                                Quoter.Quote(expression.ForeignKey.Name),
+                                expression.ForeignKey.ForeignTableSchema,
+                                expression.ForeignKey.ForeignTable,
+                               expression.ForeignKey.Name,
                                 foreignColumns,
-                                Quoter.QuoteSchemaName(expression.ForeignKey.PrimaryTableSchema),
-                                Quoter.QuoteTableName(expression.ForeignKey.PrimaryTable),
+                                expression.ForeignKey.PrimaryTableSchema,
+                               expression.ForeignKey.PrimaryTable,
                                 primaryColumns,
                                 FormatCascade("DELETE", expression.ForeignKey.OnDelete),
                                 FormatCascade("UPDATE", expression.ForeignKey.OnUpdate)
@@ -78,7 +79,7 @@ namespace FluentMigrator.Runner.Generators.Postgres
 
         public override string Generate(DeleteForeignKeyExpression expression)
         {
-            return string.Format("ALTER TABLE {0}.{1} DROP CONSTRAINT {2}", Quoter.QuoteSchemaName(expression.ForeignKey.ForeignTableSchema), Quoter.QuoteTableName(expression.ForeignKey.ForeignTable), Quoter.Quote(expression.ForeignKey.Name));
+            return string.Format("ALTER TABLE {0}.{1} DROP CONSTRAINT {2}", expression.ForeignKey.ForeignTableSchema, expression.ForeignKey.ForeignTable, expression.ForeignKey.Name);
         }
 
         public override string Generate(CreateIndexExpression expression)
@@ -97,12 +98,12 @@ namespace FluentMigrator.Runner.Generators.Postgres
                 else
                     result.Append(",");
 
-                result.Append("\"" + column.Name + "\"");
+                result.Append(column.Name);
                 result.Append(column.Direction == Direction.Ascending ? " ASC" : " DESC");
             }
             result.Append(")");
 
-            return String.Format(result.ToString(), Quoter.QuoteIndexName(expression.Index.Name), Quoter.QuoteSchemaName(expression.Index.SchemaName), Quoter.QuoteTableName(expression.Index.TableName));
+            return String.Format(result.ToString(), expression.Index.Name, this.Quoter.QuoteSchemaName(expression.Index.SchemaName), expression.Index.TableName);
 
             /*
             var idx = String.Format(result.ToString(), expression.Index.Name, Quoter.QuoteSchemaName(expression.Index.SchemaName), expression.Index.TableName); 
@@ -118,17 +119,17 @@ namespace FluentMigrator.Runner.Generators.Postgres
 
         public override string Generate(DeleteIndexExpression expression)
         {
-            return string.Format("DROP INDEX {0}.{1}", Quoter.QuoteSchemaName(expression.Index.SchemaName), Quoter.QuoteIndexName(expression.Index.Name));
+            return string.Format("DROP INDEX {0}.{1}", this.Quoter.QuoteSchemaName(expression.Index.SchemaName), expression.Index.Name);
         }
 
         public override string Generate(RenameTableExpression expression)
         {
-            return string.Format("ALTER TABLE {0}.{1} RENAME TO {2}", Quoter.QuoteSchemaName(expression.SchemaName), Quoter.QuoteTableName(expression.OldName), Quoter.QuoteTableName(expression.NewName));
+            return string.Format("ALTER TABLE {0}.{1} RENAME TO {2}", this.Quoter.QuoteSchemaName(expression.SchemaName), expression.OldName, expression.NewName);
         }
 
         public override string Generate(RenameColumnExpression expression)
         {
-            return string.Format("ALTER TABLE {0}.{1} RENAME COLUMN {2} TO {3}", Quoter.QuoteSchemaName(expression.SchemaName), Quoter.QuoteTableName(expression.TableName), Quoter.QuoteColumnName(expression.OldName), Quoter.QuoteColumnName(expression.NewName));
+            return string.Format("ALTER TABLE {0}.{1} RENAME COLUMN {2} TO {3}", this.Quoter.QuoteSchemaName(expression.SchemaName), expression.TableName, expression.OldName, expression.NewName);
         }
 
         public override string Generate(InsertDataExpression expression)
@@ -146,7 +147,7 @@ namespace FluentMigrator.Runner.Generators.Postgres
 
                 var columns = GetColumnList(columnNames);
                 var data = GetDataList(columnData);
-                result.Append(String.Format("INSERT INTO {0}.{1} ({2}) VALUES ({3});", Quoter.QuoteSchemaName(expression.SchemaName), Quoter.QuoteTableName(expression.TableName), columns, data));
+                result.Append(String.Format("INSERT INTO {0}.{1} ({2}) VALUES ({3});", this.Quoter.QuoteSchemaName(expression.SchemaName), expression.TableName, columns, data));
             }
             return result.ToString();
         }
@@ -162,7 +163,7 @@ namespace FluentMigrator.Runner.Generators.Postgres
 
             if (expression.IsAllRows)
             {
-                result.Append(String.Format("DELETE FROM {0}.{1};", Quoter.QuoteSchemaName(expression.SchemaName), Quoter.QuoteTableName(expression.TableName)));
+                result.Append(String.Format("DELETE FROM {0}.{1};", this.Quoter.QuoteSchemaName(expression.SchemaName), expression.TableName));
             }
             else
             {
@@ -178,11 +179,11 @@ namespace FluentMigrator.Runner.Generators.Postgres
                             where += " AND ";
                         }
 
-                        where += String.Format("{0} {1} {2}", Quoter.QuoteColumnName(item.Key), item.Value == null ? "IS" : "=", Quoter.QuoteValue(item.Value));
+                        where += String.Format("{0} {1} {2}", item.Key, item.Value == null ? "IS" : "=", item.Value);
                         i++;
                     }
 
-                    result.Append(String.Format("DELETE FROM {0}.{1} WHERE {2};", Quoter.QuoteSchemaName(expression.SchemaName), Quoter.QuoteTableName(expression.TableName), where));
+                    result.Append(String.Format("DELETE FROM {0}.{1} WHERE {2};", this.Quoter.QuoteSchemaName(expression.SchemaName), expression.TableName, where));
                 }
             }
 
@@ -196,7 +197,7 @@ namespace FluentMigrator.Runner.Generators.Postgres
 
             foreach (var item in expression.Set)
             {
-                updateItems.Add(string.Format("{0} = {1}", Quoter.QuoteColumnName(item.Key), Quoter.QuoteValue(item.Value)));
+                updateItems.Add(string.Format("{0} = {1}", item.Key, Quoter.QuoteValue(item.Value)));
             }
 
             if (expression.IsAllRows)
@@ -207,16 +208,16 @@ namespace FluentMigrator.Runner.Generators.Postgres
             {
                 foreach (var item in expression.Where)
                 {
-                    whereClauses.Add(string.Format("{0} {1} {2}", Quoter.QuoteColumnName(item.Key),
-                                                   item.Value == null ? "IS" : "=", Quoter.QuoteValue(item.Value)));
+                    whereClauses.Add(string.Format("{0} {1} {2}", item.Key,
+                                                   item.Value == null ? "IS" : "=", this.Quoter.QuoteValue(item.Value)));
                 }
             }
-            return String.Format("UPDATE {0}.{1} SET {2} WHERE {3}", Quoter.QuoteSchemaName(expression.SchemaName), Quoter.QuoteTableName(expression.TableName), String.Join(", ", updateItems.ToArray()), String.Join(" AND ", whereClauses.ToArray()));
+            return String.Format("UPDATE {0}.{1} SET {2} WHERE {3}", this.Quoter.QuoteSchemaName(expression.SchemaName), (expression.TableName), String.Join(", ", updateItems.ToArray()), String.Join(" AND ", whereClauses.ToArray()));
         }
 
         public override string Generate(AlterSchemaExpression expression)
         {
-            return string.Format("ALTER TABLE {0}.{1} SET SCHEMA {2}", Quoter.QuoteSchemaName(expression.SourceSchemaName), Quoter.QuoteTableName(expression.TableName), Quoter.QuoteSchemaName(expression.DestinationSchemaName));
+            return string.Format("ALTER TABLE {0}.{1} SET SCHEMA {2}", this.Quoter.QuoteSchemaName(expression.SourceSchemaName), (expression.TableName), this.Quoter.QuoteSchemaName(expression.DestinationSchemaName));
         }
 
         public override string Generate(DeleteDefaultConstraintExpression expression)
@@ -226,7 +227,7 @@ namespace FluentMigrator.Runner.Generators.Postgres
 
         public override string Generate(DeleteConstraintExpression expression)
         {
-            return string.Format("ALTER TABLE {0}.{1} DROP CONSTRAINT {2}", Quoter.QuoteSchemaName(expression.Constraint.SchemaName), Quoter.QuoteTableName(expression.Constraint.TableName), Quoter.Quote(expression.Constraint.ConstraintName));
+            return string.Format("ALTER TABLE {0}.{1} DROP CONSTRAINT {2}", this.Quoter.QuoteSchemaName(expression.Constraint.SchemaName), (expression.Constraint.TableName), (expression.Constraint.ConstraintName));
         }
 
         public override string Generate(CreateConstraintExpression expression)
@@ -237,12 +238,12 @@ namespace FluentMigrator.Runner.Generators.Postgres
 
             for (int i = 0; i < expression.Constraint.Columns.Count; i++)
             {
-                columns[i] = Quoter.QuoteColumnName(expression.Constraint.Columns.ElementAt(i));
+                columns[i] = (expression.Constraint.Columns.ElementAt(i));
             }
 
-            return string.Format("ALTER TABLE {0}.{1} ADD CONSTRAINT {2} {3} ({4})", Quoter.QuoteSchemaName(expression.Constraint.SchemaName),
-                Quoter.QuoteTableName(expression.Constraint.TableName),
-                Quoter.QuoteConstraintName(expression.Constraint.ConstraintName),
+            return string.Format("ALTER TABLE {0}.{1} ADD CONSTRAINT {2} {3} ({4})", this.Quoter.QuoteSchemaName(expression.Constraint.SchemaName),
+                (expression.Constraint.TableName),
+                (expression.Constraint.ConstraintName),
                 constraintType,
                 String.Join(", ", columns));
         }
@@ -252,7 +253,7 @@ namespace FluentMigrator.Runner.Generators.Postgres
             var result = "";
             foreach (var column in columns)
             {
-                result += Quoter.QuoteColumnName(column) + ",";
+                result += (column) + ",";
             }
             return result.TrimEnd(',');
         }

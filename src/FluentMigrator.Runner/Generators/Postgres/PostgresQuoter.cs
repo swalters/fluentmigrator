@@ -10,7 +10,7 @@ namespace FluentMigrator.Runner.Generators.Postgres
         {
             if (string.IsNullOrEmpty(schemaName))
                 schemaName = "public";
-            return base.QuoteSchemaName(schemaName);
+            return schemaName;
         }
 
         public string UnQuoteSchemaName(string quoted)
