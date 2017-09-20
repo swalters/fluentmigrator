@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using FluentMigrator.Expressions;
 using FluentMigrator.Model;
+using FluentMigrator.Runner.Generators.Base;
 using FluentMigrator.Runner.Generators.Generic;
 
 namespace FluentMigrator.Runner.Generators.Postgres

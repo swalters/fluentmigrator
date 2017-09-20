@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using FluentMigrator.Model;
 using FluentMigrator.Runner.Generators.Base;
 
@@ -10,7 +11,8 @@ namespace FluentMigrator.Runner.Generators.Postgres
     {
         public PostgresColumn() : base(new PostgresTypeMap(), new PostgresQuoter())
         {
-            AlterClauseOrder = new List<Func<ColumnDefinition, string>> { FormatAlterType, FormatAlterNullable };
+            AlterClauseOrder = new List<Func<ColumnDefinition, string>> {this.FormatAlterType, FormatAlterNullable };
+            ClauseOrder = new List<Func<ColumnDefinition, string>> { this.FormatString, FormatType, FormatNullable, FormatDefaultValue, FormatPrimaryKey, FormatIdentity };
         }
 
         public string FormatAlterDefaultValue(string column, object defaultValue)
@@ -68,7 +70,7 @@ namespace FluentMigrator.Runner.Generators.Postgres
                     first = false;
                 else
                     cols += ",";
-                cols += Quoter.QuoteColumnName(col.Name);
+                cols += col.Name;
             }
 
             if (string.IsNullOrEmpty(pkName))
@@ -112,6 +114,19 @@ namespace FluentMigrator.Runner.Generators.Postgres
         public string GetColumnType(ColumnDefinition column)
         {
             return FormatType(column);
+        }
+
+        /*
+        *
+        *
+        *Added to allow PostGres to add Columns without quotes
+        *
+        *
+        *
+        */
+        public new string FormatString(ColumnDefinition column)
+        {
+            return column.Name;
         }
     }
 }

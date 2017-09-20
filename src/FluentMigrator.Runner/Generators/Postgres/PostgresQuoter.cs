@@ -11,7 +11,7 @@ namespace FluentMigrator.Runner.Generators.Postgres
         {
             if (string.IsNullOrEmpty(schemaName))
                 schemaName = "public";
-            return base.QuoteSchemaName(schemaName);
+            return schemaName;
         }
 
         protected override string FormatByteArray(byte[] array)
